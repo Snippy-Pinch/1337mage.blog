@@ -474,7 +474,7 @@ tailwind.config = {
   }
 
   .accordion-item.open .accordion-content {
-    max-height: 2000px;
+    max-height: 10000px;
     padding: 0 1.25rem 1.25rem;
   }
 
@@ -1253,11 +1253,24 @@ function showToast(msg) {
 /* ── ACCORDION ── */
 function toggleAccordion(btn) {
   const item = btn.parentElement;
+  const content = item.querySelector('.accordion-content');
   const wasOpen = item.classList.contains('open');
   // Close all
-  document.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('open'));
+  document.querySelectorAll('.accordion-item').forEach(i => {
+    i.classList.remove('open');
+    i.querySelector('.accordion-content').style.maxHeight = null;
+  });
   // Toggle clicked
-  if (!wasOpen) item.classList.add('open');
+  if (!wasOpen) {
+    item.classList.add('open');
+    content.style.maxHeight = content.scrollHeight + 'px';
+    // Watch for images loading and resize
+    content.querySelectorAll('img').forEach(img => {
+      if (!img.complete) {
+        img.onload = () => { content.style.maxHeight = content.scrollHeight + 'px'; };
+      }
+    });
+  }
 }
 
 /* ── SCROLL TOP BUTTON ── */
