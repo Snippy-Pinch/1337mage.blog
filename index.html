@@ -468,14 +468,12 @@ tailwind.config = {
   .accordion-item.open .accordion-arrow { transform: rotate(180deg); }
 
   .accordion-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease, padding 0.3s ease;
+    display: none;
+    padding: 0 1.25rem 1.25rem;
   }
 
   .accordion-item.open .accordion-content {
-    max-height: 10000px;
-    padding: 0 1.25rem 1.25rem;
+    display: block;
   }
 
   /* ── PEER CARDS ── */
@@ -1253,24 +1251,11 @@ function showToast(msg) {
 /* ── ACCORDION ── */
 function toggleAccordion(btn) {
   const item = btn.parentElement;
-  const content = item.querySelector('.accordion-content');
   const wasOpen = item.classList.contains('open');
   // Close all
-  document.querySelectorAll('.accordion-item').forEach(i => {
-    i.classList.remove('open');
-    i.querySelector('.accordion-content').style.maxHeight = null;
-  });
+  document.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('open'));
   // Toggle clicked
-  if (!wasOpen) {
-    item.classList.add('open');
-    content.style.maxHeight = content.scrollHeight + 'px';
-    // Watch for images loading and resize
-    content.querySelectorAll('img').forEach(img => {
-      if (!img.complete) {
-        img.onload = () => { content.style.maxHeight = content.scrollHeight + 'px'; };
-      }
-    });
-  }
+  if (!wasOpen) item.classList.add('open');
 }
 
 /* ── SCROLL TOP BUTTON ── */
