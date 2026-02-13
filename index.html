@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1337mage.blog — The Digital Dungeon of Zack the Loot Goblin</title>
+<meta name="description" content="Self-proclaimed Greatest Gamer Mage. Undisputed. Don't @ me.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        void: '#0a0a0f',
+        abyss: '#12111a',
+        dungeon: '#1a1726',
+        neon: '#39ff14',
+        cyan: '#00f0ff',
+        mage: '#b44aff',
+        loot: '#ffd700',
+        rage: '#ff2d55',
+        hp: '#ff4444',
+        mana: '#4488ff',
+      },
+      fontFamily: {
+        pixel: ['"Press Start 2P"', 'monospace'],
+        terminal: ['"VT323"', 'monospace'],
+        mono: ['"Courier New"', 'Courier', 'monospace'],
+      },
+    }
+  }
+}
+</script>
+<style>
+  /* ── GLOBAL ── */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'VT323', monospace;
+    background: #0a0a0f;
+    color: #c8c8d0;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(rgba(57,255,20,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(57,255,20,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #0a0a0f; }
+  ::-webkit-scrollbar-thumb { background: #b44aff; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #39ff14; }
+
+  /* ── SCANLINE OVERLAY ── */
+  .scanlines::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  /* ── SEAL / ENTRY SCREEN ── */
+  #seal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #1a1726 0%, #0a0a0f 70%);
+    cursor: pointer;
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  #seal-overlay.dismissed {
+    opacity: 0;
+    transform: scale(1.5);
+    pointer-events: none;
+  }
+
+  .seal-icon {
+    font-size: 6rem;
+    animation: sealPulse 2s ease-in-out infinite, sealFloat 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 30px rgba(57,255,20,0.6)) drop-shadow(0 0 60px rgba(180,74,255,0.4));
+    user-select: none;
+  }
+
+  @keyframes sealPulse {
+    0%, 100% { filter: drop-shadow(0 0 20px rgba(57,255,20,0.5)) drop-shadow(0 0 40px rgba(180,74,255,0.3)); }
+    50% { filter: drop-shadow(0 0 40px rgba(57,255,20,0.9)) drop-shadow(0 0 80px rgba(180,74,255,0.6)); }
+  }
+
+  @keyframes sealFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  .seal-text {
+    font-family: 'Press Start 2P', monospace;
+    color: #39ff14;
+    font-size: 0.65rem;
+    margin-top: 2rem;
+    animation: blink 1.2s step-end infinite;
+    text-shadow: 0 0 10px rgba(57,255,20,0.8);
+    letter-spacing: 2px;
+  }
+
+  .seal-subtitle {
+    font-family: 'VT323', monospace;
+    color: #b44aff;
+    font-size: 1.2rem;
+    margin-top: 1rem;
+    opacity: 0.7;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* ── PARTICLE CANVAS ── */
+  #particles {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* ── MAIN CONTENT ── */
+  #main-content {
+    position: relative;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 1s ease 0.3s;
+  }
+
+  #main-content.visible { opacity: 1; }
+
+  /* ── HERO ── */
+  .hero-section {
+    position: relative;
+    padding: 4rem 1rem 3rem;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(180,74,255,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 100%, rgba(57,255,20,0.08) 0%, transparent 40%);
+    pointer-events: none;
+  }
+
+  .hero-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(1rem, 3.5vw, 2rem);
+    color: #39ff14;
+    text-shadow:
+      0 0 10px rgba(57,255,20,0.8),
+      0 0 30px rgba(57,255,20,0.4),
+      0 0 60px rgba(57,255,20,0.2);
+    line-height: 1.8;
+    letter-spacing: 1px;
+  }
+
+  .hero-subtitle {
+    font-family: 'VT323', monospace;
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    color: #b44aff;
+    margin-top: 1rem;
+    text-shadow: 0 0 15px rgba(180,74,255,0.5);
+  }
+
+  .hero-tagline {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: #666;
+    margin-top: 0.75rem;
+  }
+
+  /* ── HEALTH BAR DIVIDER ── */
+  .hp-bar {
+    max-width: 600px;
+    margin: 2rem auto;
+    height: 8px;
+    background: #1a1726;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #333;
+    position: relative;
+  }
+
+  .hp-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #39ff14, #00f0ff, #b44aff);
+    background-size: 200% 100%;
+    animation: hpShimmer 3s ease infinite;
+  }
+
+  @keyframes hpShimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* ── SECTION STYLES ── */
+  .section-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  .section-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.7rem, 2vw, 0.9rem);
+    color: #00f0ff;
+    text-shadow: 0 0 10px rgba(0,240,255,0.5);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-title::before,
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #00f0ff33, transparent);
+  }
+
+  /* ── BIO CARD ── */
+  .bio-card {
+    background: linear-gradient(135deg, #1a172688, #12111a88);
+    border: 1px solid #b44aff33;
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+  }
+
+  .bio-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #b44aff, #39ff14, #b44aff, transparent);
+  }
+
+  .bio-avatar {
+    font-size: 4rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 0 20px rgba(180,74,255,0.5));
+  }
+
+  .bio-text {
+    font-family: 'VT323', monospace;
+    font-size: 1.35rem;
+    line-height: 1.6;
+    color: #c8c8d0;
+  }
+
+  .bio-text .highlight-green { color: #39ff14; text-shadow: 0 0 5px rgba(57,255,20,0.3); }
+  .bio-text .highlight-purple { color: #b44aff; text-shadow: 0 0 5px rgba(180,74,255,0.3); }
+  .bio-text .highlight-gold { color: #ffd700; text-shadow: 0 0 5px rgba(255,215,0,0.3); }
+  .bio-text .highlight-cyan { color: #00f0ff; text-shadow: 0 0 5px rgba(0,240,255,0.3); }
+  .bio-text .highlight-red { color: #ff2d55; text-shadow: 0 0 5px rgba(255,45,85,0.3); }
+
+  /* ── STATS BAR ── */
+  .stat-bar-container {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+  }
+
+  .stat-label { color: #888; min-width: 80px; }
+
+  .stat-bar {
+    flex: 1;
+    height: 12px;
+    background: #0a0a0f;
+    border-radius: 2px;
+    overflow: hidden;
+    border: 1px solid #333;
+  }
+
+  .stat-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1.5s ease;
+  }
+
+  .stat-fill.hp { background: linear-gradient(90deg, #ff4444, #ff6666); }
+  .stat-fill.mana { background: linear-gradient(90deg, #4488ff, #66aaff); }
+  .stat-fill.loot { background: linear-gradient(90deg, #ffd700, #ffed4a); }
+  .stat-fill.rage { background: linear-gradient(90deg, #ff2d55, #ff6b8a); }
+  .stat-fill.touch-grass { background: linear-gradient(90deg, #39ff14, #66ff44); }
+
+  .stat-value { color: #666; font-size: 0.95rem; min-width: 40px; text-align: right; }
+
+  /* ── CHRONICLE / BLOG POST ── */
+  .chronicle-card {
+    background: linear-gradient(135deg, #1a172688, #12111a88);
+    border: 1px solid #39ff1433;
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+  }
+
+  .chronicle-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #39ff14, #00f0ff, #39ff14, transparent);
+  }
+
+  .chronicle-date {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    color: #39ff14;
+    text-shadow: 0 0 5px rgba(57,255,20,0.5);
+    letter-spacing: 2px;
+  }
+
+  .chronicle-title-text {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255,215,0,0.4);
+    margin-top: 0.75rem;
+    line-height: 1.8;
+  }
+
+  .chronicle-body {
+    font-family: 'VT323', monospace;
+    font-size: 1.3rem;
+    line-height: 1.6;
+    color: #c8c8d0;
+    margin-top: 1.25rem;
+  }
+
+  .chronicle-body p { margin-bottom: 1rem; }
+
+  .chronicle-body .rant {
+    border-left: 3px solid #ff2d55;
+    padding-left: 1rem;
+    color: #ff6b8a;
+    margin: 1rem 0;
+  }
+
+  .chronicle-body .based {
+    border-left: 3px solid #39ff14;
+    padding-left: 1rem;
+    color: #66ff44;
+    margin: 1rem 0;
+  }
+
+  .chronicle-body .loot-drop {
+    background: linear-gradient(135deg, #ffd70011, #ffd70005);
+    border: 1px solid #ffd70033;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    text-align: center;
+  }
+
+  .chronicle-body .loot-drop .item-name {
+    color: #ff8c00;
+    font-size: 1.4rem;
+  }
+
+  .chronicle-body .loot-drop .item-rarity {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5rem;
+    color: #ffd700;
+    letter-spacing: 2px;
+  }
+
+  /* ── ACCORDION ── */
+  .accordion-item {
+    background: linear-gradient(135deg, #1a172644, #12111a44);
+    border: 1px solid #ffffff11;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .accordion-item:hover { border-color: #b44aff44; }
+
+  .accordion-header {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: none;
+    border: none;
+    color: #c8c8d0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: color 0.3s;
+    line-height: 1.6;
+  }
+
+  .accordion-header:hover { color: #39ff14; }
+
+  .accordion-arrow {
+    font-size: 1.2rem;
+    transition: transform 0.3s;
+    color: #b44aff;
+    flex-shrink: 0;
+    margin-left: 1rem;
+  }
+
+  .accordion-item.open .accordion-arrow { transform: rotate(180deg); }
+
+  .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease;
+  }
+
+  .accordion-item.open .accordion-content {
+    max-height: 2000px;
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  /* ── PEER CARDS ── */
+  .peer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .peer-card {
+    background: linear-gradient(135deg, #1a172688, #0a0a0f88);
+    border: 1px solid #ffffff11;
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .peer-card:hover {
+    transform: translateY(-4px);
+    border-color: #b44aff66;
+    box-shadow: 0 8px 32px rgba(180,74,255,0.15);
+  }
+
+  .peer-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--card-accent, #b44aff);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .peer-card:hover::after { opacity: 1; }
+
+  .peer-emoji { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+  .peer-name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    line-height: 1.8;
+    margin-bottom: 0.5rem;
+  }
+
+  .peer-title {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: #888;
+    margin-bottom: 0.75rem;
+  }
+
+  .peer-desc {
+    font-family: 'VT323', monospace;
+    font-size: 1.15rem;
+    line-height: 1.5;
+    color: #999;
+  }
+
+  /* ── THREAT LEVEL ── */
+  .threat-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.4rem;
+    margin-top: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+
+  .threat-low { color: #39ff14; border-color: #39ff1444; background: #39ff1411; }
+  .threat-mid { color: #ffd700; border-color: #ffd70044; background: #ffd70011; }
+  .threat-high { color: #ff2d55; border-color: #ff2d5544; background: #ff2d5511; }
+  .threat-joke { color: #888; border-color: #88888844; background: #88888811; }
+
+  /* ── CHRONICLE LIST ── */
+  .chronicle-list-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #ffffff08;
+    transition: background 0.2s;
+    cursor: default;
+  }
+
+  .chronicle-list-item:hover { background: #ffffff05; }
+  .chronicle-list-item:last-child { border-bottom: none; }
+
+  .chronicle-list-date {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.4rem;
+    color: #39ff14;
+    min-width: 90px;
+    text-shadow: 0 0 5px rgba(57,255,20,0.3);
+  }
+
+  .chronicle-list-title {
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    color: #c8c8d0;
+  }
+
+  .chronicle-list-tag {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.35rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .tag-rant { color: #ff2d55; background: #ff2d5511; border: 1px solid #ff2d5533; }
+  .tag-loot { color: #ffd700; background: #ffd70011; border: 1px solid #ffd70033; }
+  .tag-take { color: #00f0ff; background: #00f0ff11; border: 1px solid #00f0ff33; }
+  .tag-guide { color: #39ff14; background: #39ff1411; border: 1px solid #39ff1433; }
+
+  /* ── FOOTER ── */
+  .footer-section {
+    text-align: center;
+    padding: 3rem 1rem 2rem;
+    border-top: 1px solid #ffffff08;
+    margin-top: 3rem;
+  }
+
+  .footer-ascii {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    color: #39ff1444;
+    white-space: pre;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+  }
+
+  .footer-text {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: #666;
+  }
+
+  .footer-text a {
+    color: #b44aff;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .footer-text a:hover { color: #39ff14; }
+
+  /* ── FLOATING SCROLL TOP ── */
+  #scroll-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 100;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #b44aff, #39ff14);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 20px rgba(180,74,255,0.3);
+    transition: transform 0.3s, opacity 0.3s;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #scroll-top.visible { opacity: 1; pointer-events: auto; }
+  #scroll-top:hover { transform: scale(1.1); }
+
+  /* ── TOAST / NOTIFICATION ── */
+  .toast {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    background: #1a1726;
+    border: 1px solid #39ff1444;
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    color: #39ff14;
+    text-shadow: 0 0 5px rgba(57,255,20,0.3);
+    transform: translateX(120%);
+    transition: transform 0.4s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+
+  .toast.show { transform: translateX(0); }
+
+  /* ── GLITCH EFFECT (title) ── */
+  .glitch {
+    position: relative;
+  }
+
+  .glitch::before,
+  .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .glitch::before {
+    color: #00f0ff;
+    z-index: -1;
+    animation: glitch1 3s infinite;
+  }
+
+  .glitch::after {
+    color: #ff2d55;
+    z-index: -2;
+    animation: glitch2 3s infinite;
+  }
+
+  @keyframes glitch1 {
+    0%, 94%, 100% { transform: translate(0); }
+    95% { transform: translate(-3px, 1px); }
+    96% { transform: translate(2px, -1px); }
+  }
+
+  @keyframes glitch2 {
+    0%, 96%, 100% { transform: translate(0); }
+    97% { transform: translate(3px, -2px); }
+    98% { transform: translate(-2px, 1px); }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .peer-grid { grid-template-columns: 1fr; }
+    .stat-bar-container { grid-template-columns: 1fr; }
+    .chronicle-list-item { flex-wrap: wrap; gap: 0.5rem; }
+    .chronicle-list-tag { margin-left: 0; }
+    .bio-card, .chronicle-card { padding: 1.25rem; }
+    .seal-icon { font-size: 4rem; }
+  }
+</style>
+</head>
+<body class="scanlines">
+
+<!-- ══════════════════ PARTICLE CANVAS ══════════════════ -->
+<canvas id="particles"></canvas>
+
+<!-- ══════════════════ SEAL / ENTRY ══════════════════ -->
+<div id="seal-overlay" onclick="enterDungeon()">
+  <div class="seal-icon">🎮</div>
+  <div class="seal-text">[ PRESS START ]</div>
+  <div class="seal-subtitle">— enter the digital dungeon —</div>
+  <div style="margin-top:2rem; font-family:'VT323',monospace; color:#444; font-size:1rem;">
+    Player 1 Ready?
+  </div>
+</div>
+
+<!-- ══════════════════ TOAST NOTIFICATION ══════════════════ -->
+<div class="toast" id="toast">🏆 Achievement Unlocked: Entered the Dungeon</div>
+
+<!-- ══════════════════ MAIN CONTENT ══════════════════ -->
+<div id="main-content">
+
+  <!-- ── HERO ── -->
+  <header class="hero-section">
+    <div style="font-size:3rem; margin-bottom:1rem; filter: drop-shadow(0 0 20px rgba(180,74,255,0.5));">
+      💀⚔️🐉
+    </div>
+    <h1 class="hero-title glitch" data-text="The Digital Dungeon">
+      The Digital Dungeon
+    </h1>
+    <h2 class="hero-title" style="color:#b44aff; text-shadow: 0 0 10px rgba(180,74,255,0.8), 0 0 30px rgba(180,74,255,0.4); margin-top:0.5rem;">
+      of Zack the Loot Goblin
+    </h2>
+    <p class="hero-subtitle">Self-proclaimed Greatest Gamer Mage. Undisputed. Don't @ me.</p>
+    <p class="hero-tagline">EST. 2019 &bull; Level 99 &bull; Server: Reality (Lag: Extreme)</p>
+
+    <div class="hp-bar" style="margin-top:2rem;">
+      <div class="hp-bar-fill" style="width:100%"></div>
+    </div>
+  </header>
+
+  <!-- ── BIO SECTION ── -->
+  <section class="section-container" style="margin-top:1rem;">
+    <h2 class="section-title">⚡ WHO IS ZACK THE LOOT GOBLIN? ⚡</h2>
+
+    <div class="bio-card">
+      <div class="bio-avatar">🧙‍♂️</div>
+      <div class="bio-text">
+        <p>
+          Look, I'm gonna be <span class="highlight-green">completely honest</span> with you. I am, without question, 
+          the <span class="highlight-gold">greatest gamer mage</span> to ever grace an MMO server. That's not an opinion. 
+          That's just <span class="highlight-green">facts</span>. I've cleared every raid tier, collected 
+          <span class="highlight-purple">every mount</span> (yes, even the 0.01% drop ones — got 'em all first try, 
+          don't even ask), and my DPS parse is so high it literally broke the addon twice.
+        </p>
+        <br>
+        <p>
+          My tower? It's a <span class="highlight-cyan">gaming room</span> in the truest sense. Some people would call it 
+          "a health hazard" or "concerning" — I call it <span class="highlight-green">optimized</span>. Haven't cleaned 
+          since 2019, and honestly? <span class="highlight-gold">Peak efficiency</span>. Every empty Mountain Dew can is 
+          exactly where I need it. The pizza boxes provide <span class="highlight-purple">structural support</span> for 
+          my monitor stand. My setup is held together with duct tape, prayers, and a GPU that sounds like a jet engine 
+          taking off at 3 AM. <span class="highlight-red">It's beautiful.</span>
+        </p>
+        <br>
+        <p>
+          I've been gaming since before most of you were born. I was <span class="highlight-green">trash-talking in Barrens chat</span> 
+          while you were still in diapers. I've seen MMOs rise and fall. I've watched the gaming industry go from 
+          <span class="highlight-gold">"here's a complete game for $50"</span> to 
+          <span class="highlight-red">"here's 30% of a game for $70 plus a $25 battle pass plus a $200 collector's edition 
+          that comes with a statue nobody asked for."</span> And I have <span class="highlight-purple">opinions</span> about 
+          ALL of it.
+        </p>
+        <br>
+        <p>
+          Am I the most well-adjusted person? <span class="highlight-red">No.</span> Do I sometimes eat cereal out of a 
+          mixing bowl at 4 AM while watching YouTube videos about lore for games I've never played? 
+          <span class="highlight-green">Yes.</span> Do I shower regularly? 
+          <span class="highlight-cyan">...Next question.</span> But when it comes to gaming takes, 
+          <span class="highlight-gold">I am the authority</span>. I don't do mid takes. Everything is either 
+          <span class="highlight-green">the greatest thing ever made</span> or 
+          <span class="highlight-red">complete and utter trash</span>. There is no in-between. 
+          That's the <span class="highlight-purple">Loot Goblin guarantee</span>. 💀
+        </p>
+      </div>
+
+      <!-- STAT BARS -->
+      <div class="stat-bar-container">
+        <div class="stat-item">
+          <span class="stat-label" style="color:#ff4444;">❤️ HP</span>
+          <div class="stat-bar"><div class="stat-fill hp" style="width:45%"></div></div>
+          <span class="stat-value">45%</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label" style="color:#4488ff;">💧 MANA</span>
+          <div class="stat-bar"><div class="stat-fill mana" style="width:92%"></div></div>
+          <span class="stat-value">92%</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label" style="color:#ffd700;">💰 LOOT</span>
+          <div class="stat-bar"><div class="stat-fill loot" style="width:99%"></div></div>
+          <span class="stat-value">99%</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label" style="color:#ff2d55;">🔥 RAGE</span>
+          <div class="stat-bar"><div class="stat-fill rage" style="width:78%"></div></div>
+          <span class="stat-value">78%</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label" style="color:#39ff14;">🌿 GRASS</span>
+          <div class="stat-bar"><div class="stat-fill touch-grass" style="width:3%"></div></div>
+          <span class="stat-value">3%</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── LATEST CHRONICLE ── -->
+  <section class="section-container" style="margin-top:3rem;">
+    <h2 class="section-title">📜 LATEST CHRONICLE 📜</h2>
+
+    <div class="chronicle-card">
+      <div class="chronicle-date">FEB 12, 2026</div>
+      <h3 class="chronicle-title-text">
+        ⚔️ "Realm of Eternity: Shadowtide" Is the Biggest L in MMO History, AI Is Coming for Our Games, and I Got the Rarest Mount in Existence
+      </h3>
+      <div class="chronicle-body">
+        <p>
+          Alright boys, let's talk about it. <span class="highlight-green">Realm of Eternity: Shadowtide</span> dropped 
+          last week and I've been playing it for about 80 hours straight. My review? 
+          <span class="highlight-red">It's trash.</span> And I don't mean like "oh it has some rough edges" trash. 
+          I mean <span class="highlight-red">dumpster-behind-a-Wendy's-in-August</span> trash.
+        </p>
+
+        <div class="rant">
+          They gutted the entire talent system and replaced it with... a "Destiny Board." You know what a Destiny Board is? 
+          It's a mobile game skill tree. They literally took a mobile game mechanic and put it in a $70 PC MMO. 
+          The end-game is three dungeons — THREE — and one of them is just a reskinned version of a dungeon from the 
+          base game. The final boss is a color swap of the first boss. I'm not joking. Same mechanics, same arena, 
+          they just made him purple. PURPLE. They thought we wouldn't notice because he's PURPLE now. Bro. 💀
+        </div>
+
+        <p>
+          And of course, <span class="highlight-gold">the real content is in the cash shop</span>. Want the cool armor? 
+          $25. Want the mount that was literally shown in the trailer as a gameplay reward? $35 in the store. 
+          Day one. In the STORE. They showed it in the cinematic trailer, the character riding this sick dragon through 
+          a storm, and it's not even earnable in game.
+        </p>
+
+        <div class="rant">
+          I'm so tired of pay-to-win, dude. It's not even pay-to-win anymore, it's 
+          <span class="highlight-red">pay-to-have-the-experience-they-advertised</span>. They sell you a vision 
+          and then chop it up into seventeen different $20 pieces. The base game is just the loading screen for the 
+          cash shop. I've said it before and I'll say it again: 
+          <span style="color:#ffd700;">the moment a game sells power for real money, it's dead to me.</span> 
+          I don't care if it's "just cosmetic" — we all know it never stays "just cosmetic." It starts with a 
+          horse armor and ends with a $99.99 "Legendary Hero Bundle" that gives you max-level gear. 
+          Every. Single. Time.
+        </p>
+
+        <p>
+          Now here's where it gets interesting. They announced that <span class="highlight-cyan">Shadowtide's 
+          next update will feature "AI-generated dungeons."</span> Procedurally generated content powered by 
+          AI. And dude... I have mixed feelings.
+        </p>
+
+        <div class="based">
+          On one hand, if AI can generate actually good, infinitely replayable dungeons? 
+          <span style="color:#39ff14;">That's literally the dream.</span> Imagine never running the same dungeon twice. 
+          Imagine every loot run being unique. That's based as hell. BUT — and this is a huge but — 
+          if they use AI as an excuse to fire their level designers and ship half-baked procedural slop? 
+          That's the darkest timeline. And knowing this studio? It's gonna be slop. Premium-priced slop 
+          with a battle pass attached. Copium levels are astronomical right now in the community.
+        </div>
+
+        <p>
+          Okay but now the <span class="highlight-gold">W</span> of the week. Despite Shadowtide being mid, 
+          I was farming the Legacy Raid for transmogs (because that's what endgame is now — looking cool in 
+          dead content) and...
+        </p>
+
+        <div class="loot-drop">
+          <div style="font-size:2.5rem; margin-bottom:0.5rem;">🐉✨</div>
+          <div class="item-rarity">★ LEGENDARY DROP ★</div>
+          <div class="item-name" style="margin-top:0.5rem;">
+            Voidscale Wyrm of the Eternal Eclipse
+          </div>
+          <div style="color:#888; margin-top:0.3rem; font-size:1.1rem;">
+            0.03% Drop Rate &bull; Mount &bull; Account-Bound
+          </div>
+          <div style="color:#39ff14; margin-top:0.5rem;">
+            First try. Didn't even know it could drop. GIGACHAD.
+          </div>
+        </div>
+
+        <p>
+          Chat went absolutely <span class="highlight-purple">insane</span>. People were malding. 
+          Someone in my guild said "must be nice" and I said yeah, it is nice, maybe you should try being better? 
+          They didn't like that. But here's the thing — I've been farming this raid since launch. 
+          That's <span class="highlight-cyan">347 kills</span>. Is that a lot? Yeah. 
+          Did I say I got it first try? Also yeah. 
+          <span class="highlight-red">Those aren't contradictory, don't think about it too hard.</span>
+        </p>
+
+        <p>
+          Alright, here's the bottom line. Here's Zack's <span class="highlight-gold">Gaming Wisdom™</span> 
+          for the day:
+        </p>
+
+        <div class="based">
+          Games come and go. Studios will disappoint you. Publishers will try to empty your wallet. 
+          But at the end of the day? <span style="color:#ffd700;">The games that matter are the ones 
+          where you're having fun with your boys at 2 AM, half asleep, running content you've cleared 
+          a hundred times, and laughing about dumb stuff.</span> That's what gaming is. Not battle passes. 
+          Not cosmetic shops. Not AI-generated content. Just you, your friends, and a game that respects 
+          your time. Don't settle for anything less. And for the love of god, 
+          <span style="color:#39ff14;">stop pre-ordering games.</span>
+        </div>
+
+        <p style="text-align:center; color:#b44aff; margin-top:1.5rem; font-size:1.5rem;">
+          — Zack the Loot Goblin 💀<br>
+          <span style="font-size:1rem; color:#666;">Posted at 4:37 AM because sleep is for casuals</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ACCORDION: PEERS & RIVALS ── -->
+  <section class="section-container" style="margin-top:3rem;">
+    <h2 class="section-title">🎮 ARCHIVES 🎮</h2>
+
+    <!-- Peers -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>👥 The Guild of Questionable Skill — Peers & Rivals</span>
+        <span class="accordion-arrow">▼</span>
+      </button>
+      <div class="accordion-content">
+        <p style="font-family:'VT323',monospace; font-size:1.2rem; color:#888; margin-bottom:1.25rem;">
+          Every legendary mage has their... associates. I wouldn't call them equals. I'd barely call them 
+          competent. But they exist in my orbit, and I guess that counts for something. Here are the 
+          "finest" gamers I've had the displeasure of grouping with:
+        </p>
+
+        <div class="peer-grid">
+          <!-- Karen -->
+          <div class="peer-card" style="--card-accent: #ff2d55;">
+            <div class="peer-emoji">👩‍💻🏳️</div>
+            <div class="peer-name" style="color:#ff6b8a;">Karen the Queue-Dodger</div>
+            <div class="peer-title">Class: "Support" (Never Heals) &bull; Rank: Hardstuck Silver</div>
+            <div class="peer-desc">
+              Claims to be a "pro" but exclusively plays casual modes and ARAM. Her greatest achievement 
+              is a participation trophy from a local LAN party in 2017 where she placed 47th out of 48. 
+              The 48th person didn't show up. Blames lag for literally everything — including turn-based games. 
+              Has reported 3,000+ players for "cheating" (they were just better). Her PC costs $3,000 
+              but she plays on minimum settings "for the competitive advantage." Average K/D: 0.3.
+            </div>
+            <div class="threat-level threat-low">THREAT: NEGLIGIBLE</div>
+          </div>
+
+          <!-- Brad -->
+          <div class="peer-card" style="--card-accent: #ffd700;">
+            <div class="peer-emoji">💳🐋</div>
+            <div class="peer-name" style="color:#ffd700;">Brad the Whale</div>
+            <div class="peer-title">Class: Credit Card Mage &bull; Rank: Bought</div>
+            <div class="peer-desc">
+              Has spent $47,000 on mobile gacha games. FORTY-SEVEN THOUSAND. His "skill" is his Amex Black 
+              Card. Has every legendary character, weapon, and skin across 14 different gacha games but 
+              can't clear basic story content without auto-play on. Calls himself a "collector" — bro, 
+              you're an investor in bad decisions. Once spent $800 trying to pull a limited banner 
+              character, didn't get it, and said "it's just a hobby." His accountant weeps.
+            </div>
+            <div class="threat-level threat-mid">THREAT: TO HIS BANK ACCOUNT</div>
+          </div>
+
+          <!-- DarkShadow -->
+          <div class="peer-card" style="--card-accent: #b44aff;">
+            <div class="peer-emoji">😎🎧</div>
+            <div class="peer-name" style="color:#b44aff;">xX_DarkShadow_Xx</div>
+            <div class="peer-title">Class: Washed-Up FPS Andy &bull; Rank: Unranked (Decay)</div>
+            <div class="peer-desc">
+              Still uses his Xbox 360 gamertag from 2008 and genuinely thinks it's cool. Peaked during 
+              MW2 lobby trash talk — an era he will never stop referencing. "Bro you wouldn't have survived 
+              MW2 lobbies" yeah dude nobody cares it's 2026. Now streams to 3 viewers: two are bots he 
+              accidentally followed, and one is his mom who leaves the tab open while she watches Netflix. 
+              His stream title has said "ROAD TO 100 FOLLOWERS" for 4 years. He's at 11.
+            </div>
+            <div class="threat-level threat-joke">THREAT: EMOTIONAL (TO HIMSELF)</div>
+          </div>
+
+          <!-- Pixel Princess -->
+          <div class="peer-card" style="--card-accent: #ff69b4;">
+            <div class="peer-emoji">✨👑</div>
+            <div class="peer-name" style="color:#ff69b4;">Pixel Princess Sparkle</div>
+            <div class="peer-title">Class: "Variety" Streamer &bull; Rank: Tutorial Boss</div>
+            <div class="peer-desc">
+              "Variety streamer" who played 200 games this year and finished exactly zero. Her stream is 
+              90% Just Chatting, 8% loading screens, and 2% dying in the tutorial. Has an opinion on every 
+              game despite never getting past character creation. Her most-watched clip is her screaming at 
+              a jumpscare in a game rated E for Everyone. Calls every game "literally so hard" — 
+              including Stardew Valley. Her chat is 100% parasocial andys who gift subs for attention.
+            </div>
+            <div class="threat-level threat-low">THREAT: TO GAME COMPLETION RATES</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chronicle Archive -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>📜 Chronicle Archive — Previous Entries</span>
+        <span class="accordion-arrow">▼</span>
+      </button>
+      <div class="accordion-content">
+        <div class="chronicle-list-item">
+          <span class="chronicle-list-date">JAN 28</span>
+          <span class="chronicle-list-title">Why Every "Live Service" Game Is Just a Subscription You Didn't Agree To</span>
+          <span class="chronicle-list-tag tag-rant">RANT</span>
+        </div>
+        <div class="chronicle-list-item">
+          <span class="chronicle-list-date">JAN 15</span>
+          <span class="chronicle-list-title">I Farmed This Boss 500 Times And All I Got Was Existential Dread</span>
+          <span class="chronicle-list-tag tag-loot">LOOT</span>
+        </div>
+        <div class="chronicle-list-item">
+          <span class="chronicle-list-date">JAN 03</span>
+          <span class="chronicle-list-title">Hot Take: Classic WoW Was Never Actually Good, You Were Just 14</span>
+          <span class="chronicle-list-tag tag-take">TAKE</span>
+        </div>
+        <div class="chronicle-list-item">
+          <span class="chronicle-list-date">DEC 22</span>
+          <span class="chronicle-list-title">The Definitive Mount Tier List (Everyone Will Disagree)</span>
+          <span class="chronicle-list-tag tag-guide">GUIDE</span>
+        </div>
+        <div class="chronicle-list-item">
+          <span class="chronicle-list-date">DEC 10</span>
+          <span class="chronicle-list-title">My $400 Chair Broke So I'm Gaming on a Folding Chair — It's Fine</span>
+          <span class="chronicle-list-tag tag-rant">RANT</span>
+        </div>
+        <div class="chronicle-list-item">
+          <span class="chronicle-list-date">NOV 29</span>
+          <span class="chronicle-list-title">If Your Game Needs a Battle Pass, Your Game Isn't Good Enough</span>
+          <span class="chronicle-list-tag tag-take">TAKE</span>
+        </div>
+        <div class="chronicle-list-item">
+          <span class="chronicle-list-date">NOV 14</span>
+          <span class="chronicle-list-title">Raid Night Disaster: We Wiped 47 Times Because Brad Forgot His Rotation</span>
+          <span class="chronicle-list-tag tag-loot">LOOT</span>
+        </div>
+        <div class="chronicle-list-item">
+          <span class="chronicle-list-date">OCT 31</span>
+          <span class="chronicle-list-title">The Scariest Thing This Halloween Is My Electricity Bill</span>
+          <span class="chronicle-list-tag tag-rant">RANT</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gaming Setup -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🖥️ The Legendary Setup — Hardware & Gear</span>
+        <span class="accordion-arrow">▼</span>
+      </button>
+      <div class="accordion-content">
+        <div style="font-family:'VT323',monospace; font-size:1.25rem; color:#c8c8d0;">
+          <div style="display:grid; grid-template-columns: 140px 1fr; gap:0.5rem 1rem;">
+            <span style="color:#00f0ff;">GPU:</span>
+            <span>RTX 4090 (held in place by a chopstick and hope)</span>
+
+            <span style="color:#00f0ff;">CPU:</span>
+            <span>i9-14900K (thermal throttles when I open Chrome)</span>
+
+            <span style="color:#00f0ff;">RAM:</span>
+            <span>64GB DDR5 (50GB used by browser tabs I'll "get to later")</span>
+
+            <span style="color:#00f0ff;">Monitor:</span>
+            <span>32" 4K 240Hz (still plays games at 1080p "for frames")</span>
+
+            <span style="color:#00f0ff;">Mouse:</span>
+            <span>Some Logitech thing with half the grip tape peeled off</span>
+
+            <span style="color:#00f0ff;">Keyboard:</span>
+            <span>Mechanical, Cherry MX Blues (neighbors love me at 3 AM)</span>
+
+            <span style="color:#00f0ff;">Chair:</span>
+            <span>Folding chair from Walmart. $12. Undefeated.</span>
+
+            <span style="color:#00f0ff;">Desk:</span>
+            <span>IKEA Linnmon. The leg wobbles. It's fine.</span>
+
+            <span style="color:#00f0ff;">Headset:</span>
+            <span>HyperX Cloud II (held together with electrical tape since 2021)</span>
+
+            <span style="color:#00f0ff;">Webcam:</span>
+            <span>Logitech C920 (intentionally bad quality to hide the room)</span>
+
+            <span style="color:#00f0ff;">Ambiance:</span>
+            <span>6 empty Mountain Dew cans, 3 pizza boxes (load-bearing), 1 dead plant</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>❓ FAQ — Frequently Argued Questions</span>
+        <span class="accordion-arrow">▼</span>
+      </button>
+      <div class="accordion-content">
+        <div style="font-family:'VT323',monospace; font-size:1.25rem; color:#c8c8d0;">
+          <p style="margin-bottom:1rem;">
+            <span style="color:#00f0ff;">Q: Are you actually the greatest gamer mage?</span><br>
+            <span style="color:#c8c8d0;">A: Yes. Next question.</span>
+          </p>
+          <p style="margin-bottom:1rem;">
+            <span style="color:#00f0ff;">Q: What's your favorite game of all time?</span><br>
+            <span style="color:#c8c8d0;">A: Whatever game I'm currently playing is the greatest game ever made. 
+            Whatever game I stopped playing is trash. This is consistent and I will not elaborate.</span>
+          </p>
+          <p style="margin-bottom:1rem;">
+            <span style="color:#00f0ff;">Q: Why don't you clean your room?</span><br>
+            <span style="color:#c8c8d0;">A: It's called an ecosystem. You wouldn't understand. Every item is 
+            exactly where I left it, which means I always know where everything is. That's organization. 
+            Look it up.</span>
+          </p>
+          <p style="margin-bottom:1rem;">
+            <span style="color:#00f0ff;">Q: What's your opinion on [game you've never played]?</span><br>
+            <span style="color:#c8c8d0;">A: It's either amazing or trash, I'll decide in the first 15 seconds of 
+            a YouTube video about it and that opinion will be final and non-negotiable.</span>
+          </p>
+          <p style="margin-bottom:1rem;">
+            <span style="color:#00f0ff;">Q: Do you touch grass?</span><br>
+            <span style="color:#c8c8d0;">A: I have a dead plant in my room. That counts. Grass touched. Achievement 
+            unlocked. Moving on.</span>
+          </p>
+          <p style="margin-bottom:1rem;">
+            <span style="color:#00f0ff;">Q: Best class in any MMO?</span><br>
+            <span style="color:#c8c8d0;">A: Whatever I'm playing is the best class. Whatever killed me is broken 
+            and needs to be nerfed. This has been true for 15 years and will never change.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer-section">
+    <div class="footer-ascii">
+ ██╗██████╗ ██████╗ ███████╗███╗   ███╗ █████╗  ██████╗ ███████╗
+███║╚════██╗╚════██╗╚════██║████╗ ████║██╔══██╗██╔════╝ ██╔════╝
+╚██║ █████╔╝ █████╔╝    ██╔╝██╔████╔██║███████║██║  ███╗█████╗
+ ██║ ╚═══██╗  ╚═══██╗  ██╔╝ ██║╚██╔╝██║██╔══██║██║   ██║██╔══╝
+ ██║██████╔╝██████╔╝   ██║  ██║ ╚═╝ ██║██║  ██║╚██████╔╝███████╗
+ ╚═╝╚═════╝ ╚═════╝    ╚═╝  ╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
+    </div>
+    <p class="footer-text">
+      &copy; 2026 <a href="#">1337mage.blog</a> — The Digital Dungeon of Zack the Loot Goblin<br>
+      <span style="color:#444; font-size:0.95rem;">
+        No mounts were harmed in the making of this blog. Brad's wallet, however, is another story.<br>
+        Built with 💀, ☕, and an unhealthy amount of Mountain Dew at 4 AM.
+      </span>
+    </p>
+    <p style="font-family:'Press Start 2P',monospace; font-size:0.45rem; color:#333; margin-top:1.5rem;">
+      GG WP NO RE
+    </p>
+  </footer>
+
+</div>
+
+<!-- ── SCROLL TO TOP ── -->
+<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Scroll to top">⬆️</button>
+
+<!-- ══════════════════ SCRIPTS ══════════════════ -->
+<script>
+/* ── SEAL ENTRY ── */
+function enterDungeon() {
+  const overlay = document.getElementById('seal-overlay');
+  overlay.classList.add('dismissed');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    document.getElementById('main-content').classList.add('visible');
+    document.body.style.overflow = 'auto';
+    showToast('🏆 Achievement Unlocked: Entered the Dungeon');
+  }, 600);
+}
+
+/* ── TOAST ── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ── ACCORDION ── */
+function toggleAccordion(btn) {
+  const item = btn.parentElement;
+  const wasOpen = item.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('open'));
+  // Toggle clicked
+  if (!wasOpen) item.classList.add('open');
+}
+
+/* ── SCROLL TOP BUTTON ── */
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scroll-top');
+  if (window.scrollY > 400) {
+    btn.classList.add('visible');
+  } else {
+    btn.classList.remove('visible');
+  }
+});
+
+/* ── PARTICLE SYSTEM ── */
+(function() {
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  const PARTICLE_COUNT = 60;
+
+  const colors = [
+    'rgba(57,255,20,',   // neon green
+    'rgba(0,240,255,',   // cyan
+    'rgba(180,74,255,',  // purple
+    'rgba(255,215,0,',   // gold
+  ];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function createParticle() {
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    return {
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 3 + 1,
+      speedX: (Math.random() - 0.5) * 0.5,
+      speedY: (Math.random() - 0.5) * 0.5,
+      color: color,
+      alpha: Math.random() * 0.5 + 0.1,
+      alphaDir: Math.random() > 0.5 ? 0.005 : -0.005,
+      // Pixel-style: occasionally make square particles
+      isPixel: Math.random() > 0.6,
+    };
+  }
+
+  function init() {
+    resize();
+    particles = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      particles.push(createParticle());
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach(p => {
+      p.x += p.speedX;
+      p.y += p.speedY;
+      p.alpha += p.alphaDir;
+
+      if (p.alpha <= 0.05 || p.alpha >= 0.6) p.alphaDir *= -1;
+
+      // Wrap around
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height;
+      if (p.y > canvas.height) p.y = 0;
+
+      ctx.fillStyle = p.color + p.alpha + ')';
+
+      if (p.isPixel) {
+        // Square pixel particle
+        ctx.fillRect(
+          Math.round(p.x),
+          Math.round(p.y),
+          Math.round(p.size),
+          Math.round(p.size)
+        );
+      } else {
+        // Round particle with glow
+        ctx.shadowColor = p.color + '0.3)';
+        ctx.shadowBlur = p.size * 3;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  init();
+  draw();
+})();
+
+/* ── KONAMI CODE EASTER EGG ── */
+(function() {
+  const code = [38,38,40,40,37,39,37,39,66,65]; // ↑↑↓↓←→←→BA
+  let pos = 0;
+  document.addEventListener('keydown', e => {
+    if (e.keyCode === code[pos]) {
+      pos++;
+      if (pos === code.length) {
+        showToast('🎮 KONAMI CODE ACTIVATED — +30 Lives! (Just kidding, you\'re still trash)');
+        document.body.style.animation = 'none';
+        // Rainbow border flash
+        document.body.style.boxShadow = '0 0 100px rgba(57,255,20,0.5) inset';
+        setTimeout(() => { document.body.style.boxShadow = 'none'; }, 2000);
+        pos = 0;
+      }
+    } else {
+      pos = 0;
+    }
+  });
+})();
+
+/* ── Prevent scroll when seal is visible ── */
+document.body.style.overflow = 'hidden';
+</script>
+
+</body>
+</html>
