@@ -285,8 +285,8 @@ tailwind.config = {
 
   .bio-text {
     font-family: 'VT323', monospace;
-    font-size: clamp(1.4rem, 4vw, 1.6rem);
-    line-height: 1.7;
+    font-size: clamp(1.5rem, 5vw, 1.8rem);
+    line-height: 1.8;
     color: #c8c8d0;
   }
 
@@ -315,7 +315,7 @@ tailwind.config = {
     align-items: center;
     gap: 0.5rem;
     font-family: 'VT323', monospace;
-    font-size: 1.1rem;
+    font-size: clamp(1.1rem, 3.5vw, 1.3rem);
   }
 
   .stat-label { color: #888; min-width: 80px; }
@@ -383,8 +383,8 @@ tailwind.config = {
 
   .chronicle-body {
     font-family: 'VT323', monospace;
-    font-size: clamp(1.3rem, 4vw, 1.5rem);
-    line-height: 1.7;
+    font-size: clamp(1.5rem, 5vw, 1.8rem);
+    line-height: 1.8;
     color: #c8c8d0;
     margin-top: 1.25rem;
   }
@@ -539,8 +539,8 @@ tailwind.config = {
 
   .peer-desc {
     font-family: 'VT323', monospace;
-    font-size: clamp(1.15rem, 3.5vw, 1.3rem);
-    line-height: 1.6;
+    font-size: clamp(1.3rem, 4vw, 1.5rem);
+    line-height: 1.7;
     color: #999;
   }
 
@@ -598,7 +598,7 @@ tailwind.config = {
 
   .chronicle-list-title {
     font-family: 'VT323', monospace;
-    font-size: 1.2rem;
+    font-size: clamp(1.2rem, 4vw, 1.4rem);
     color: #c8c8d0;
   }
 
@@ -624,7 +624,7 @@ tailwind.config = {
     margin-top: 3rem;
   }
 
-  .footer-ascii {
+  .footer-ascii { overflow-x:hidden;
     font-family: 'Courier New', monospace;
     font-size: 0.65rem;
     color: #39ff1444;
@@ -740,6 +740,16 @@ tailwind.config = {
     .chronicle-list-tag { margin-left: 0; }
     .bio-card, .chronicle-card { padding: 1.25rem; }
     .seal-icon { font-size: 4rem; }
+  }
+  /* ── MOBILE OVERRIDES ── */
+  @media (max-width: 500px) {
+    .footer-ascii { display: none; }
+    .seal-icon { font-size: 4.5rem; }
+    .seal-text { font-size: 0.55rem; }
+    .accordion-header { padding: 0.85rem 1rem; font-size: 0.5rem !important; line-height: 1.8; }
+    .peer-card { padding: 1.25rem; }
+    .peer-title { font-size: 1.1rem; }
+    .chronicle-body .loot-drop .item-name { font-size: 1.2rem; }
   }
 </style>
 </head>
@@ -1107,8 +1117,8 @@ tailwind.config = {
         <span class="accordion-arrow">▼</span>
       </button>
       <div class="accordion-content">
-        <div style="font-family:'VT323',monospace; font-size:1.25rem; color:#c8c8d0;">
-          <div style="display:grid; grid-template-columns: 140px 1fr; gap:0.5rem 1rem;">
+        <div style="font-family:'VT323',monospace; font-size:clamp(1.35rem, 4.5vw, 1.6rem); color:#c8c8d0;">
+          <div style="display:grid; grid-template-columns: minmax(100px, 140px) 1fr; gap:0.5rem 1rem;">
             <span style="color:#00f0ff;">GPU:</span>
             <span>RTX 4090 (held in place by a chopstick and hope)</span>
 
@@ -1153,7 +1163,7 @@ tailwind.config = {
         <span class="accordion-arrow">▼</span>
       </button>
       <div class="accordion-content">
-        <div style="font-family:'VT323',monospace; font-size:1.25rem; color:#c8c8d0;">
+        <div style="font-family:'VT323',monospace; font-size:clamp(1.35rem, 4.5vw, 1.6rem); color:#c8c8d0;">
           <p style="margin-bottom:1rem;">
             <span style="color:#00f0ff;">Q: Are you actually the greatest gamer mage?</span><br>
             <span style="color:#c8c8d0;">A: Yes. Next question.</span>
